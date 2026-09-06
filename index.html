@@ -58,6 +58,17 @@
             font-weight: bold;
         }
         .textarea-jawi { resize: none; line-height: 2; }
+        
+        /* Specific Styles for True/False */
+        .tf-nav-active {
+            box-shadow: 0 0 0 4px #fce7f3;
+            transform: scale(1.05);
+            border-color: #db2777 !important;
+        }
+        .tf-option-btn { transition: all 0.2s; }
+        .tf-option-btn:hover:not(:disabled) { transform: translateY(-5px); } 
+        .tf-correct-ans { background-color: #22c55e !important; color: white !important; border-color: #16a34a !important; }
+        .tf-wrong-ans { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
     </style>
 </head>
 <body class="w-full h-screen text-slate-800 flex flex-col relative">
@@ -120,6 +131,23 @@
                     </div>
                     <div class="mt-8 flex items-center text-indigo-600 font-bold font-jawi text-xl group-hover:translate-x-[-10px] transition-transform">
                         مولا لاتيهن <i class="fas fa-arrow-left mr-2"></i>
+                    </div>
+                </button>
+
+                <!-- True/False Card -->
+                <button onclick="switchView('truefalse')" class="group text-right bg-white rounded-3xl p-10 border-2 border-transparent hover:border-pink-400 hover:shadow-2xl transition-all duration-300 relative overflow-hidden text-slate-800 flex flex-col justify-between min-h-[300px] md:col-span-2 lg:col-span-1 lg:col-start-1 lg:col-end-3 max-w-2xl mx-auto w-full">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-pink-500"></div>
+                    <div>
+                        <div class="w-16 h-16 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-check-double"></i>
+                        </div>
+                        <h2 class="font-jawi text-4xl font-bold mb-4">اوجين بتول/ساله</h2>
+                        <p class="font-jawi text-xl text-slate-500 leading-loose">
+                            100 سوءالن ڤپاتاءن توحيد. تنتوکن سام ادا ڤپاتاءن ترسبوت 'بتول' اتاو 'ساله' دڠن ڤمرکهن اوتوماتيک.
+                        </p>
+                    </div>
+                    <div class="mt-8 flex items-center text-pink-600 font-bold font-jawi text-xl group-hover:translate-x-[-10px] transition-transform">
+                        مولا اوجين <i class="fas fa-arrow-left mr-2"></i>
                     </div>
                 </button>
             </div>
@@ -261,20 +289,103 @@
         </main>
     </div>
 
+    <!-- True/False App -->
+    <div id="truefalse-app" class="hidden flex-1 flex h-full overflow-hidden w-full relative">
+        <div id="tfMobileOverlay" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-40 hidden md:hidden transition-opacity" onclick="toggleTfMobileMenu()"></div>
+
+        <!-- True/False Sidebar -->
+        <aside id="tf-sidebar" class="bg-white w-80 flex-shrink-0 border-l border-slate-200 flex flex-col h-full absolute md:relative z-50 transform translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shadow-xl md:shadow-none right-0 top-0">
+            <div class="h-24 flex flex-col justify-center px-6 border-b border-slate-200 bg-pink-50">
+                <div class="flex items-center justify-between">
+                    <h2 class="font-jawi text-3xl font-bold text-pink-900">مينو سوءالن</h2>
+                    <button onclick="toggleTfMobileMenu()" class="md:hidden text-slate-500 hover:text-pink-600 text-2xl"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="mt-2 text-sm font-bold text-pink-600 flex justify-between font-sans">
+                    <span id="tf-scoreTracker">مرکه: 0 / 100</span>
+                    <span id="tf-progressTracker">دجواب: 0</span>
+                </div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-6" id="tf-sidebarMenu"></div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 relative">
+            <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-10 shadow-sm flex-shrink-0 z-10">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleTfMobileMenu()" class="md:hidden text-slate-600 hover:text-pink-600 text-2xl"><i class="fas fa-bars"></i></button>
+                    <div class="flex items-center gap-3 text-pink-600 bg-pink-50 px-4 py-2 rounded-full font-bold">
+                        <i class="fas fa-check-double"></i>
+                        <span class="font-jawi text-xl md:text-2xl pt-1 hidden sm:block">اوجين بتول/ساله</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="font-jawi text-lg md:text-xl text-slate-500 font-bold hidden md:block" id="tf-headerTopicIndicator">ڤلاجرن 1</div>
+                    <div class="w-px h-8 bg-slate-200 hidden md:block"></div>
+                    <button onclick="switchView('home')" class="font-jawi text-xl bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors font-bold flex items-center gap-2">
+                        <i class="fas fa-home"></i> <span class="hidden sm:inline">لامن اوتام</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-6 md:p-12 scroll-smooth" id="tf-scrollArea">
+                <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-lg border border-slate-100 overflow-hidden fade-in relative" id="tf-questionCard">
+                    <div class="bg-pink-600 px-8 py-6 flex justify-between items-center text-white">
+                        <h3 class="font-sans text-xl md:text-2xl font-bold tracking-wide" id="tf-qNumberBadge">سوءالن 1 / 100</h3>
+                        <span class="bg-white/20 px-4 py-1 rounded-full text-sm font-semibold tracking-wider font-sans" id="tf-qCategoryBadge">AL-ULUHIYYAH</span>
+                    </div>
+                    <div class="p-8 md:p-12 min-h-[400px] flex flex-col justify-center text-center">
+                        <p class="font-jawi text-3xl md:text-5xl text-slate-800 font-bold mb-16 leading-loose" id="tf-questionText">مموءات سوءالن...</p>
+                        
+                        <div class="grid grid-cols-2 gap-6 max-w-2xl mx-auto w-full">
+                            <button onclick="selectTfAnswer(true)" id="tf-btn-true" class="tf-option-btn w-full py-8 px-6 bg-white border-4 border-emerald-100 text-emerald-600 hover:border-emerald-500 hover:bg-emerald-50 rounded-3xl font-bold flex flex-col items-center gap-4 transition-all">
+                                <i class="fas fa-check-circle text-6xl"></i>
+                                <span class="font-jawi text-4xl">بتول</span>
+                            </button>
+                            <button onclick="selectTfAnswer(false)" id="tf-btn-false" class="tf-option-btn w-full py-8 px-6 bg-white border-4 border-rose-100 text-rose-600 hover:border-rose-500 hover:bg-rose-50 rounded-3xl font-bold flex flex-col items-center gap-4 transition-all">
+                                <i class="fas fa-times-circle text-6xl"></i>
+                                <span class="font-jawi text-4xl">ساله</span>
+                            </button>
+                        </div>
+                        
+                        <div id="tf-feedbackBox" class="hidden mt-12 p-6 rounded-2xl border-2 font-jawi text-2xl md:text-3xl font-bold flex items-center justify-center gap-4 fade-in"></div>
+                    </div>
+                </div>
+
+                <div class="max-w-4xl mx-auto mt-8 flex justify-between items-center pb-12">
+                    <button onclick="prevTfQuestion()" id="tf-prevBtn" class="px-6 py-4 bg-white border border-slate-200 text-slate-600 hover:text-pink-600 hover:border-pink-300 rounded-2xl font-bold font-jawi text-2xl transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        <i class="fas fa-arrow-right"></i> سبلومڽ
+                    </button>
+                    <button onclick="nextTfQuestion()" id="tf-nextBtn" class="px-8 py-4 bg-pink-600 hover:bg-pink-700 text-white rounded-2xl font-bold font-jawi text-2xl transition-all shadow-md shadow-pink-200 flex items-center gap-2">
+                        ستروسڽ <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+                
+                <div class="max-w-4xl mx-auto text-center hidden pb-12" id="tf-finishContainer">
+                    <button onclick="showTfFinalResult()" class="px-10 py-5 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg transition-transform hover:scale-105 font-jawi text-3xl">
+                        ليهت کڤوتوسن ڤنوه <i class="fas fa-flag-checkered mr-3"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
 <script>
 function switchView(viewName) {
     document.getElementById('home-screen').classList.add('hidden');
     document.getElementById('objective-app').classList.add('hidden');
     document.getElementById('structured-app').classList.add('hidden');
+    document.getElementById('truefalse-app').classList.add('hidden');
 
     if (viewName === 'home') {
         document.getElementById('home-screen').classList.remove('hidden');
     } else if (viewName === 'objective') {
         document.getElementById('objective-app').classList.remove('hidden');
-        if(userObjAnswers.length === 0) initObjective(); // init on first load
+        if(userObjAnswers.length === 0) initObjective(); 
     } else if (viewName === 'structured') {
         document.getElementById('structured-app').classList.remove('hidden');
-        if(!strSidebarInitialized) initStructured(); // init on first load
+        if(!strSidebarInitialized) initStructured(); 
+    } else if (viewName === 'truefalse') {
+        document.getElementById('truefalse-app').classList.remove('hidden');
+        if(userTfAnswers.length === 0) initTrueFalse();
     }
 }
 
@@ -688,7 +799,6 @@ function renderStrSidebar() {
     menuHTML += `</div></div>`;
     menu.innerHTML = menuHTML;
 }
-
 function loadStrQuestion(index) {
     if(index < 0 || index >= structuredData.length) return;
     currentStrIndex = index;
@@ -743,6 +853,270 @@ function toggleStrMobileMenu() {
     }
 }
 
+const trueFalseData = [
+    // PELAJARAN 1: AL-ULUHIYYAH
+    { topic: "ڤلاجرن 1: الألوهية", q: "الألوهية ڤد بهاس برارتي ککواساءن يڠ مطلق.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "مقصود الألوهية ڤد شرع اياله مها کاي الله درڤد تياڤ-تياڤ يڠ لاين دان برکهندق تياڤ-تياڤ يڠ لاين کڤداڽ.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "الألوهية يڠ مشهور باݢي علماء اداله الله دسمبه دڠن سبنر-بنرڽ.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "مخلوق تيدق برکهندق کڤد الله کران مخلوق دبري کواس سنديري.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "کليمه لا إله إلا الله برتوجوان اونتوق منجلسکن صيفت کتوهنن.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "استغناء الله عن کل ما سواه برمقصود برکهندق کڤداڽ اوليه تياڤ-تياڤ يڠ لاين.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "افتقار إليه کل ما سواه ممرلوکن 9 صيفت باݢي الله.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "کليمه لا إله إلا الله منڤتي شهادة يڠ کدوا.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "الوجود اداله ساله ساتو صيفت يڠ ترماسوق دالم استغناء.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "کونه سميعا دان کونه بصيرا ماسوق دالم بهاݢين افتقار.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "جک الله تيدق برصيفت قيامه بنفسه، دي اکن برکهندق کڤد يڠ لاين.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "جک الله تيدق برصيفت دڠن سمع دان بصر، الله دکيرا برصيفت ککورڠن.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "الله هاروس مڠمبيل فاءيده درڤد ڤربواتن دان حکومنڽ.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "واجب باݢي الله مڠاداکن سسواتو اتاو منياداکنڽ منوروت استغناء.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "ستياڤ مخلوق تيدق ممبري کسن دڠن کواسڽ سنديري.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "جک مخلوق ممبري کسن دڠن کواسڽ، الله دأڠݢڤ ممرلوکن ڤرانتارا (واسطة).", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "جومله صيفت باݢي استغناء (واجب دان مستحيل) اياله 22 صيفت.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "الوحدانية ترماسوق دالم 9 صيفت باݢي افتقار.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "العلم دان الحياة ترماسوق دالم استغناء.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "جک الله تيدق برصيفت دڠن قدرة، مخلوق تيدق اکن وجود.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "بهارو سکالين عالم اداله صيفت تمبهن دالم افتقار.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "عالم اين بوليه جادي قديم (سديا ادا).", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "ستياڤ مخلوق تيدق ممبري کسن دڠن ڤربواتنڽ.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "جک مخلوق ممبري کسن دڠن ڤربواتنڽ، مخلوق ايت مسيه برکهندق کڤد الله.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "جومله کسلوروهن صيفت افتقار برسرتا لاونڽ اياله 22 صيفت.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "کائنات مروجوع کڤد بندا-بندا يڠ وجود سڤرتي ماتاهاري دان بولن.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "فهمن معتزلة مندهولوکن نص بربنديڠ عقل.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "اورڠ يڠ ملاکوکن معصية دان مپيمڤڠ دري جالن يڠ بنر دڤڠݢيل فاسق.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "بدعة تربهاݢي کڤد تيݢ: حسنة، سيئة دان مکروهة.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "اعتقاد بهاوا اڤي ممبري کسن ترباکر دڠن طبيعة ذاتڽ دحکومکن کافير.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "اعتقاد بهاوا ماءنسي منجاديکن ڤربواتن دڠن کقواتن يڠ دبري الله دحکومکن فاسق لاݢي بدعة.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "اورڠ يڠ مڠاڠݢڤ ماکن مستي کپڠ دحکومکن مرتد تروس.", a: false },
+    { topic: "ڤلاجرن 1: الألوهية", q: "اعتقاد أهل السنة والجماعة هاڽ الله يڠ ممبري کسن سمات-مات.", a: true },
+    { topic: "ڤلاجرن 1: الألوهية", q: "معجزة نبي إبراهيم دچمڤق ک دالم اڤي ممبوقتيکن سبب برعادت (اڤي) تيدق سلالو ممبري کسن.", a: true },
+
+    // PELAJARAN 2: AQAID AL-IMAN
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "شهادة يڠ کدوا يايت 'محمد رسول الله' مڠاندوڠي 9 عقائد باݢي رسول.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "صيفت تبليغ برمقصود بيجقسان.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "خيانة اداله لاون کڤد صيفت أمانة باݢي رسول.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "کتمان (مپمبوڽيکن) اداله صيفت واجب باݢي رسول.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "صيفت هاروس باݢي رسول اياله برصيفت سڤرتي ماءنسي بياسا.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "ترداڤت 5 روکون ايمان تمبهن دالم شهادة کدوا.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "برايمان کڤد هاري قيامة دبريتاهو اوليه نبي محمد صلى الله عليه وسلم.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "سکورڠ-کورڠ عقائد دالم دوا کليمه شهادة اياله 41 ڤرکارا.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "کليمه 'لا إله إلا الله' مڠاندوڠي 41 صيفت عقائد.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "دالم کليمه 'محمد رسول الله' ماسوق 9 صيفت باݢي رسول.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "سباڽق-باڽق عقائد دالم دوا کليمه شهادة اياله 68 ڤرکارا.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "دالم ڤڠيراءن 68، 'لا إله إلا الله' مڠاندوڠي 50 صيفت.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "اڠک 50 ايت داتڠ دري 28 استغناء دان 22 افتقار.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "دالم ڤڠيراءن 68، 'محمد رسول الله' مڠاندوڠي 28 ڤرکارا.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "اڠک 18 দالم محمد رسول الله داتڠ دري 10 صيفت رسول دان 8 روکون ايمان.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "דوا کليمه شهادة بوکن شرط صح باݢي اورڠ يڠ ماسوق إسلام.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "کليمه شهادة مڠاندوڠي سݢالا صيفت الله دان رسول يڠ واجب دکتاهوي.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "عقائد الإيمان مستي دحياتي دالم هاتي اورڠ مؤمن.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "اورڠ يڠ ברعقل دکهندقي مڠوچڤ شهادة ڤد ماس تتنتو سهاج.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "اڤابيلا شهادة مسرا دالم هاتي، مؤمن דاڤت مليهت رهسيا يڠ تيدق דچاڤاي عقل.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "ڤنڠهياتن شهادة אکن مڠورڠکن کقواتن ايمان.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "عقائد مروجوع کڤد سيمڤولن ايمان دالم هاتي.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "צيفت هاروس باݢي الله דکيرا סکالي דالم 41 صيفت کتوהنن.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "רוکون אيمان 4 ڤرکارا אيت ماسوق דالم شהאدة ڤرتام.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "מمבאچا شہאدة ةוליה مנمבה کاسيہن ܟڤد اݢام الله.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "ڤڠאסס ݢוلوڠן מעתزلۃ ιيאلە גہم ةن صفوان.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "اﻭרڠ যڠ ملאکوكנ ةדعة سـيـئـة ةوُليه مმБاﻭا کଫဒ کסસתן.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "اعתܩാד أهل สנۃ ﻭاﻟﺠมాﻋۃ มܢطາعﺘﻲ نص ឵รيﻔ឵ عﻘܠ.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "اעתﻗาד ยڠ סالە เתנﺘڠ פرﺑܘាتנ ಬﻭලﻴە মמ឵اﺗڠکנ ܟכফوُرܢ.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "موعجزۃ ನബി บܘليە ឵פلాגﺭي ดרଫด פוกו.", a: false },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "سיחיר هاڽ مڠலიရוקܢ فڠลﻴهﺘܢ، ةوᱠܢ මמובה הﻘיಕת.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "فاសק ιﻳಾᱞە អורڠ ยڠ مלາکܘᱠܢ مﻌصية เנפา כלواר אسലام.", a: true },
+    { topic: "ڤلاجرن 2: عقائد الإيمان", q: "כليبيهﻦ 10 מوعจزۃ เدាਲە מমਬﻭﻗתيكܢ מسبب اﻳत ឵ארי הလلە.", a: true },
+
+    // PELAJARAN 3: BERIMAN KEPADA NABI DAN RASUL
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "واجب اتس تياڤ-تياڤ مکلف برايمان کڤد نبي دان رسول.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "نبوة برمقصود اورڠ يڠ براوسها.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "نبأ برمقصود بريتا درڤد الله.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "نبي دڤرينته مپمڤايکن وحي کڤد ماءنسي لاين.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "نبي ماسيه منجادي چونتوه ملالوءي عملنڽ.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول برمقصود اوتوسن اتاو سوروهن.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول تيدق دڤرينتهکن مپمڤايکن وحي.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول مپمڤايکن شرع کڤد ماءنسي دان جين.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "تياڤ-تياڤ نبي ايت اداله رسول.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "تياڤ-تياڤ رسول ايت اداله نبي.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "ڤڠکت نبي بوليه دداڤت دڠن اوسها دان برخلوة.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "اهلي فلسفه ڤرچاي ڤڠکت נبي بوليه דأوسהاکן.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "نبي محمد صلى الله عليه وسلم اداله اوتوسن تراخير.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "سروان نبي محمد هاڽ دتوجوکن کڤد بڠسا عرب.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول دڤيليه دري کالڠن ملائکة اونتوق مڠاجر ماءنسي.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "طبيعة ماءنسي سبلوم رسول اياله هورو-هارا دان برتوهنکن نفسو.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول مميمڤين دڠن چارا ڤقساءن.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "حکوم شرع دتورونکن صديکيت دمي صديکيت.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "مکلف اياله اورڠ يڠ باليڠ دان برعقل.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول ممبريتاهو ڤرخبرن اخيرة مڠيکوت قدر عقل ماءنسي.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول مموتوسکن ڤرسليسيهن برداسرکن ڤراسان مريک.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "صيفت هاروس رسول تيدق بوليه منجاتوهکن مرتبت مريک.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول مصطحيل دتيمڤا ڤپاکيت کجي سڤرتي کوستا.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "ساکيت يڠ منيمڤا رسول اداله اوتوق منمبه دوسا مريک.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول برکقواتن ملائکة ڤد باطينڽ (تيدق مندرهاک).", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "ماءنسي بياسا دکورنياکن معجزة.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "معجزة بوليه مپالهي عادت ܟبياساءن.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "سحر بوليه دڤلاجري اوليه اورڠ بياسا.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "مسيلمة الکذاب برجاي ممباڽقکن اءير دالم تلاݢ.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "بيلڠن رسول يڠ واجب دکتاهوي سچارا تفصيل اياله 25 اورڠ.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "سبهاݢين علماء مڠاتاکن بيلڠن کسموا نبي اياله 313.", a: false },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول يڠ ممڤوڽاءي شريعة سنديري اداله 6 اورڠ.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "رسول أولو العزم اداله مريک يڠ ممڤوڽاءي کصبرن تيڠݢي.", a: true },
+    { topic: "ڤلاجرن 3: برايمان کڤد نبي دان رسول", q: "نبي محمد بوليه ممبري شفاعة ڤد هاري قيامة.", a: true }
+];
+
+let currentTfIndex = 0;
+let userTfAnswers = []; 
+let correctTfCount = 0;
+
+function initTrueFalse() {
+    userTfAnswers = new Array(trueFalseData.length).fill(null);
+    correctTfCount = 0;
+    // Shuffle True False Questions
+    for (let i = trueFalseData.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [trueFalseData[i], trueFalseData[j]] = [trueFalseData[j], trueFalseData[i]];
+    }
+    renderTfSidebar();
+    loadTfQuestion(0);
+}
+
+function renderTfSidebar() {
+    const menu = document.getElementById('tf-sidebarMenu');
+    let currentTopic = "";
+    let menuHTML = "";
+    
+    trueFalseData.forEach((item, index) => {
+        if(item.topic !== currentTopic) {
+            if(currentTopic !== "") menuHTML += `</div></div>`;
+            currentTopic = item.topic;
+            menuHTML += `
+                <div class="mb-2">
+                    <h4 class="font-jawi text-xl text-pink-900 font-bold mb-3 bg-pink-50 p-2 rounded border-r-4 border-pink-400">${currentTopic}</h4>
+                    <div class="grid grid-cols-5 gap-2 pr-2">
+            `;
+        }
+        let btnClass = "border-slate-200 text-slate-600 hover:bg-pink-100 bg-white";
+        if (userTfAnswers[index] !== null) {
+            btnClass = userTfAnswers[index] === trueFalseData[index].a ? "border-green-500 bg-green-500 text-white" : "border-red-500 bg-red-500 text-white";
+        }
+        menuHTML += `<button onclick="goToTfQuestion(${index})" id="tfBtn-${index}" class="w-10 h-10 flex items-center justify-center rounded-lg border-2 font-bold transition-all font-sans text-sm ${btnClass}">${index + 1}</button>`;
+    });
+    menuHTML += `</div></div>`;
+    menu.innerHTML = menuHTML;
+}
+
+function loadTfQuestion(index) {
+    if(index < 0 || index >= trueFalseData.length) return;
+    currentTfIndex = index;
+    const item = trueFalseData[index];
+    
+    document.getElementById('tf-questionText').innerText = item.q;
+    document.getElementById('tf-qNumberBadge').innerText = `سوءالن ${index + 1} / 100`;
+    document.getElementById('tf-qCategoryBadge').innerText = item.topic.split(':')[1] ? item.topic.split(':')[1].trim().toUpperCase() : item.topic.toUpperCase();
+    document.getElementById('tf-headerTopicIndicator').innerText = item.topic;
+    
+    const isAnswered = userTfAnswers[index] !== null;
+    const fbBox = document.getElementById('tf-feedbackBox');
+    const btnTrue = document.getElementById('tf-btn-true');
+    const btnFalse = document.getElementById('tf-btn-false');
+    
+    // Reset buttons
+    btnTrue.disabled = false; btnFalse.disabled = false;
+    btnTrue.className = "tf-option-btn w-full py-8 px-6 bg-white border-4 border-emerald-100 text-emerald-600 hover:border-emerald-500 hover:bg-emerald-50 rounded-3xl font-bold flex flex-col items-center gap-4 transition-all";
+    btnFalse.className = "tf-option-btn w-full py-8 px-6 bg-white border-4 border-rose-100 text-rose-600 hover:border-rose-500 hover:bg-rose-50 rounded-3xl font-bold flex flex-col items-center gap-4 transition-all";
+
+    if (isAnswered) {
+        btnTrue.disabled = true; btnFalse.disabled = true;
+        btnTrue.classList.add('disabled-option', 'cursor-not-allowed');
+        btnFalse.classList.add('disabled-option', 'cursor-not-allowed');
+        
+        const userAnswer = userTfAnswers[index];
+        const correctAns = item.a;
+        
+        if (userAnswer === true) {
+            if (correctAns === true) btnTrue.classList.add('tf-correct-ans');
+            else { btnTrue.classList.add('tf-wrong-ans'); btnFalse.classList.add('tf-correct-ans'); btnFalse.classList.remove('disabled-option'); }
+        } else {
+            if (correctAns === false) btnFalse.classList.add('tf-correct-ans');
+            else { btnFalse.classList.add('tf-wrong-ans'); btnTrue.classList.add('tf-correct-ans'); btnTrue.classList.remove('disabled-option'); }
+        }
+        
+        fbBox.classList.remove('hidden');
+        if (userAnswer === correctAns) {
+            fbBox.className = "mt-12 p-6 rounded-2xl border-2 font-jawi text-2xl md:text-3xl font-bold flex items-center justify-center gap-4 fade-in bg-green-50 text-green-700 border-green-200";
+            fbBox.innerHTML = '<i class="fas fa-check-circle text-4xl"></i> تڤت سکالي!';
+        } else {
+            fbBox.className = "mt-12 p-6 rounded-2xl border-2 font-jawi text-2xl md:text-3xl font-bold flex items-center justify-center gap-4 fade-in bg-red-50 text-red-700 border-red-200";
+            fbBox.innerHTML = '<i class="fas fa-times-circle text-4xl"></i> کيليرو! جواڤن اندا ساله.';
+        }
+    } else {
+        fbBox.classList.add('hidden');
+    }
+
+    document.querySelectorAll('[id^="tfBtn-"]').forEach(b => b.classList.remove('tf-nav-active'));
+    const activeBtn = document.getElementById(`tfBtn-${index}`);
+    if(activeBtn) { activeBtn.classList.add('tf-nav-active'); activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+    
+    document.getElementById('tf-prevBtn').disabled = (index === 0);
+    if (index === trueFalseData.length - 1) {
+        document.getElementById('tf-nextBtn').classList.add('hidden');
+        document.getElementById('tf-finishContainer').classList.remove('hidden');
+    } else {
+        document.getElementById('tf-nextBtn').classList.remove('hidden');
+        document.getElementById('tf-finishContainer').classList.add('hidden');
+    }
+    
+    const card = document.getElementById('tf-questionCard');
+    card.classList.remove('fade-in'); void card.offsetWidth; card.classList.add('fade-in');
+    document.getElementById('tf-scrollArea').scrollTo(0,0);
+    
+    const sidebar = document.getElementById('tf-sidebar');
+    if(!sidebar.classList.contains('translate-x-full')) toggleTfMobileMenu();
+}
+
+function selectTfAnswer(answer) {
+    userTfAnswers[currentTfIndex] = answer;
+    if (answer === trueFalseData[currentTfIndex].a) correctTfCount++;
+    document.getElementById('tf-scoreTracker').innerText = `مرکه: ${correctTfCount} / 100`;
+    document.getElementById('tf-progressTracker').innerText = `دجواب: ${userTfAnswers.filter(a => a !== null).length}`;
+    renderTfSidebar();
+    loadTfQuestion(currentTfIndex);
+}
+
+function nextTfQuestion() { if(currentTfIndex < trueFalseData.length - 1) loadTfQuestion(currentTfIndex + 1); }
+function prevTfQuestion() { if(currentTfIndex > 0) loadTfQuestion(currentTfIndex - 1); }
+function goToTfQuestion(index) { loadTfQuestion(index); }
+function toggleTfMobileMenu() {
+    const sb = document.getElementById('tf-sidebar');
+    const mo = document.getElementById('tfMobileOverlay');
+    if (sb.classList.contains('translate-x-full')) {
+        sb.classList.remove('translate-x-full'); mo.classList.remove('hidden');
+    } else {
+        sb.classList.add('translate-x-full'); mo.classList.add('hidden');
+    }
+}
+
+function showTfFinalResult() {
+    const answeredCount = userTfAnswers.filter(a => a !== null).length;
+    if (answeredCount < 100) {
+        showModal("ڤرايڠتن", `اندا بارو منجواب ${answeredCount}/100 سوءالن. سيلا جواب سموا سوءالن مڠݢوناکن مينو سوءالن سبلو کڤوتوسن دڤاڤرکن.`);
+        toggleTfMobileMenu();
+        return;
+    }
+    const pct = correctTfCount;
+    let msg = pct >= 80 ? "چمرلڠ! ممتاز!" : (pct >= 60 ? "باءيق! تروسکن اوسها!" : "ڤرلو لبيه لاتيهن. جاڠن ڤوتوس اسا!");
+    document.getElementById('tf-questionCard').innerHTML = `
+        <div class="p-12 text-center fade-in">
+            <h2 class="font-jawi text-5xl md:text-6xl text-pink-800 font-bold mb-8">اوجين تمت!</h2>
+            <div class="text-6xl md:text-8xl font-bold text-green-600 mb-6 font-sans">${correctTfCount} / 100</div>
+            <p class="font-jawi text-4xl text-slate-700 font-bold mb-8">${msg}</p>
+            <p class="font-jawi text-2xl text-slate-500 mb-10 leading-loose">اندا بوليه مپيمق سموا جواڤن اندا ملالوءي مينو نافيݢاسي د سبله.</p>
+            <button onclick="switchView('home')" class="px-10 py-5 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-2xl shadow-lg transition-transform hover:scale-105 font-jawi text-3xl">
+                کمبالي ک لامن اوتام <i class="fas fa-home mr-3"></i>
+            </button>
+        </div>
+    `;
+    document.getElementById('tf-prevBtn').style.display = 'none';
+    document.getElementById('tf-finishContainer').style.display = 'none';
+}
 </script>
 </body>
 </html>
