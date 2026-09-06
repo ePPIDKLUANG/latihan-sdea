@@ -41,13 +41,14 @@
         .textarea-jawi { resize: none; line-height: 2; }
         
         /* Mind Map Styles */
-        .node-level-1 { background-color: #059669; color: white; border-radius: 12px; padding: 15px 25px; font-weight: bold; font-size: 1.5rem; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); cursor: pointer; transition: transform 0.2s; position: relative; z-index: 10; border: 2px solid white; }
-        .node-level-1:hover { transform: scale(1.05); }
-        .node-level-2 { background-color: #10b981; color: white; border-radius: 10px; padding: 12px 20px; font-size: 1.25rem; text-align: center; box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1); cursor: pointer; transition: all 0.2s; position: relative; z-index: 10; border: 2px solid #a7f3d0; }
-        .node-level-2:hover { background-color: #047857; }
-        .node-level-3 { background-color: #ecfdf5; color: #065f46; border-radius: 8px; padding: 10px 15px; font-size: 1.1rem; text-align: center; border: 1px solid #6ee7b7; cursor: pointer; transition: all 0.2s; position: relative; z-index: 10; }
-        .node-level-3:hover { background-color: #d1fae5; border-color: #34d399; }
-        .mm-connector { position: absolute; background-color: #a7f3d0; z-index: 1; transform-origin: 0 0; }
+        .node-level-1 { background-color: #059669; color: white; border-radius: 16px; padding: 15px 30px; font-weight: bold; font-size: 2rem; text-align: center; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 4px solid #34d399; z-index: 10; max-width: 350px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+        .node-level-2 { background-color: #0f766e; color: white; border-radius: 12px; padding: 12px 25px; font-size: 1.6rem; font-weight: bold; text-align: center; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 2px solid #5eead4; z-index: 10; max-width: 300px; }
+        .node-level-3 { background-color: #f0fdf4; color: #065f46; border-radius: 10px; padding: 10px 20px; font-size: 1.4rem; font-weight: bold; text-align: center; border: 2px solid #6ee7b7; box-shadow: 0 2px 4px rgba(0,0,0,0.05); z-index: 10; max-width: 250px; }
+        .node-level-4 { background-color: #ffffff; color: #0f766e; border-radius: 8px; padding: 8px 15px; font-size: 1.2rem; text-align: center; border: 1px solid #99f6e4; z-index: 10; max-width: 200px; }
+        
+        .mm-bg { background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 30px 30px; }
+        .mm-control-btn { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); color: #059669; font-size: 1.4rem; transition: all 0.2s; border: 2px solid #d1fae5; }
+        .mm-control-btn:hover { background: #ecfdf5; transform: scale(1.05); }
         
         /* Matching Game Styles */
         .match-card { transition: all 0.2s; cursor: pointer; user-select: none; }
@@ -243,7 +244,7 @@
         <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-10 shadow-sm flex-shrink-0 z-20 relative">
             <div class="flex items-center gap-3 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full font-bold"><i class="fas fa-project-diagram"></i><span class="font-jawi text-xl md:text-2xl pt-1">ڤتا ميندا توحيد</span></div>
             <div class="flex items-center gap-4">
-                <select id="mm-topic-select" onchange="renderMindMap(this.value)" class="font-jawi text-xl bg-white border-2 border-emerald-200 text-emerald-800 rounded-xl px-4 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                <select id="mm-topic-select" onchange="renderMindMap(this.value)" class="font-jawi text-xl bg-white border-2 border-emerald-200 text-emerald-800 rounded-xl px-4 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-sm">
                     <option value="0">ڤلاجرن 1: الألوهية</option>
                     <option value="1">ڤلاجرن 2: عقائد الإيمان</option>
                     <option value="2">ڤلاجرن 3: نبي دان رسول</option>
@@ -256,12 +257,20 @@
                 <button onclick="switchView('home')" class="font-jawi text-xl bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition-colors font-bold flex items-center gap-2"><i class="fas fa-home"></i> <span class="hidden sm:inline">لامن اوتام</span></button>
             </div>
         </header>
-        <div class="flex-1 overflow-auto p-10 relative bg-emerald-50/30" id="mm-container">
-            <div id="mm-canvas" class="min-w-max min-h-max relative pb-32">
+
+        <!-- Controls -->
+        <div class="absolute bottom-8 right-8 z-30 flex flex-col gap-3">
+            <button onclick="zoomMindMap(0.1)" class="mm-control-btn" title="Zum Masuk"><i class="fas fa-search-plus"></i></button>
+            <button onclick="zoomMindMap(-0.1)" class="mm-control-btn" title="Zum Keluar"><i class="fas fa-search-minus"></i></button>
+            <button onclick="resetMindMap()" class="mm-control-btn" title="Asal"><i class="fas fa-compress-arrows-alt"></i></button>
+        </div>
+
+        <div class="flex-1 overflow-hidden relative bg-emerald-50/20 mm-bg cursor-grab active:cursor-grabbing" id="mm-viewport">
+            <div id="mm-transform-layer" class="w-full h-full relative origin-top transition-transform duration-200 ease-out flex justify-center pt-16 pb-32">
                 <!-- SVG layer for connecting lines -->
-                <svg id="mm-svg" class="absolute inset-0 w-full h-full pointer-events-none z-0"></svg>
-                <!-- Nodes injected here -->
-                <div id="mm-nodes-wrapper" class="relative z-10 flex flex-col items-center gap-12 font-jawi"></div>
+                <svg id="mm-svg" class="absolute top-0 left-0 w-full h-full pointer-events-none z-0"></svg>
+                <!-- Nodes injected here via recursive function -->
+                <div id="mm-nodes-wrapper" class="relative z-10 font-jawi w-max h-max"></div>
             </div>
         </div>
     </div>
@@ -663,89 +672,185 @@ const trueFalseData = [
 
 // --- DATA PETA MINDA (HIERARKI) ---
 const mindMapData = [
-    {
-        title: "الألوهية",
-        nodes: [
-            { text: "الألوهية", level: 1, x: 50, y: 10, children: [0, 1] },
-            { text: "استغناء الله عن کل ما سواه", level: 2, x: 20, y: 35, children: [2,3,4,5] },
-            { text: "افتقار إليه کل ما سواه", level: 2, x: 80, y: 35, children: [6,7] },
-            { text: "11 صيفت واجب", level: 3, x: 5, y: 60, children: [] },
-            { text: "11 صيفت مستحيل", level: 3, x: 25, y: 60, children: [] },
-            { text: "تيدق مڠمبيل فاءيده", level: 3, x: 15, y: 75, children: [] },
-            { text: "مخلوق تيدق ممبري کسن دڠن کواس", level: 3, x: 35, y: 75, children: [] },
-            { text: "9 صيفت واجب + 9 مستحيل", level: 3, x: 70, y: 60, children: [] },
-            { text: "مخلوق تيدق ممبري کسن دڠن ڤربواتن", level: 3, x: 90, y: 60, children: [] }
+    { // 0: Pelajaran 1
+        text: "الألوهية (کتوهنن)", level: 1,
+        children: [
+            {
+                text: "استغناء الله عن کل ما سواه\n(مها کاي الله درڤد يڠ لاين)", level: 2,
+                children: [
+                    { text: "11 صيفت واجب", level: 3, children: [{text: "الوجود، القدم، البقاء، مخالفته للحوادث، قيامه بنفسه، السمع، البصر، الکلام، کونه سميعا، بصيرا، متکلما", level: 4}] },
+                    { text: "11 صيفت مستحيل", level: 3 },
+                    { text: "3 صيفت تمبهن", level: 3, children: [{text: "1. تيدق مڠمبيل فاءيده\n2. تيدق واجب مڠاداکن سسواتو\n3. مخلوق تيدق ممبري کسن دڠن کواس", level: 4}] }
+                ]
+            },
+            {
+                text: "افتقار إليه کل ما سواه\n(مخلوق برکهندق کڤداڽ)", level: 2,
+                children: [
+                    { text: "9 صيفت واجب", level: 3, children: [{text: "الوحدانية، القدرة، الإرادة، العلم، الحياة، کونه قادرا، مريدا، عالما، حيا", level: 4}] },
+                    { text: "9 صيفت مستحيل", level: 3 },
+                    { text: "2 صيفت تمبهن", level: 3, children: [{text: "1. بهارو سکالين عالم\n2. مخلوق تيدق ممبري کسن دڠن ڤربواتن", level: 4}] }
+                ]
+            }
         ]
     },
-    {
-        title: "عقائد الإيمان",
-        nodes: [
-            { text: "عقائد الإيمان (68 ڤرکارا)", level: 1, x: 50, y: 10, children: [0, 1] },
-            { text: "لا إله إلا الله (50 ڤرکارا)", level: 2, x: 25, y: 35, children: [2, 3] },
-            { text: "محمد رسول الله (18 ڤرکارا)", level: 2, x: 75, y: 35, children: [4, 5] },
-            { text: "28 استغناء", level: 3, x: 15, y: 60, children: [] },
-            { text: "22 افتقار", level: 3, x: 35, y: 60, children: [] },
-            { text: "10 صيفت رسول", level: 3, x: 65, y: 60, children: [] },
-            { text: "8 روکون تمبهن", level: 3, x: 85, y: 60, children: [] }
+    { // 1: Pelajaran 2
+        text: "عقائد الإيمان\n(68 ڤرکارا)", level: 1,
+        children: [
+            {
+                text: "لا إله إلا الله\n(50 ڤرکارا)", level: 2,
+                children: [
+                    { text: "استغناء (28)", level: 3, children: [{text: "14 واجب/تمبهن + 14 مستحيل", level: 4}] },
+                    { text: "افتقار (22)", level: 3, children: [{text: "11 واجب/تمبهن + 11 مستحيل", level: 4}] }
+                ]
+            },
+            {
+                text: "محمد رسول الله\n(18 ڤرکارا)", level: 2,
+                children: [
+                    { text: "صيفت رسول (10)", level: 3, children: [{text: "4 واجب (صدق، أمانة، تبليغ، فطانة)\n4 مستحيل (کذب، خيانة، کتمان، بلادة)\n1 هاروس + 1 لاون هاروس", level: 4}] },
+                    { text: "روکون تمبهن (8)", level: 3, children: [{text: "برايمان کڤد نبي/رسول، ملائکة، کتاب، قيامة (برسرتا لاونڽ)", level: 4}] }
+                ]
+            }
         ]
     },
-    {
-        title: "نبي دان رسول",
-        nodes: [
-            { text: "نبي دان رسول", level: 1, x: 50, y: 10, children: [0, 1] },
-            { text: "نبي", level: 2, x: 25, y: 35, children: [2] },
-            { text: "رسول", level: 2, x: 75, y: 35, children: [3, 4] },
-            { text: "تيدق دڤرينته مپمڤايکن", level: 3, x: 25, y: 60, children: [] },
-            { text: "دڤرينته مپمڤايکن", level: 3, x: 65, y: 60, children: [] },
-            { text: "أولو العزم (5 اورڠ)", level: 3, x: 85, y: 60, children: [] }
+    { // 2: Pelajaran 3
+        text: "نبي دان رسول", level: 1,
+        children: [
+            {
+                text: "نبي (عام)", level: 2,
+                children: [
+                    { text: "دسمڤايکن وحي شرع", level: 3 },
+                    { text: "تيدق دڤرينته مپمڤايکن", level: 3 },
+                    { text: "جومله: 124,000 اورڠ", level: 3 }
+                ]
+            },
+            {
+                text: "رسول (خاص)", level: 2,
+                children: [
+                    { text: "دسمڤايکن وحي شرع", level: 3 },
+                    { text: "واجب مپمڤايکن کڤد اومت", level: 3 },
+                    { text: "جومله: 313 اورڠ (25 تفصيل)", level: 3 },
+                    { text: "أولو العزم (5)", level: 3, children: [{text: "محمد، إبراهيم، موسى، عيسى، نوح (عليهم السلام)", level: 4}] }
+                ]
+            }
         ]
     },
-    {
-        title: "کتاب",
-        nodes: [
-            { text: "کتاب الله (4)", level: 1, x: 50, y: 10, children: [0, 1, 2, 3] },
-            { text: "توراة (موسى)", level: 2, x: 15, y: 40, children: [] },
-            { text: "زبور (داود)", level: 2, x: 38, y: 40, children: [] },
-            { text: "إنجيل (عيسى)", level: 2, x: 62, y: 40, children: [] },
-            { text: "القرءان (محمد)", level: 2, x: 85, y: 40, children: [4] },
-            { text: "متواتر & ممنسوخکن يڠ لام", level: 3, x: 85, y: 70, children: [] }
+    { // 3: Pelajaran 4
+        text: "کتاب الله\n(وحي دان ݢاريس ڤندوان)", level: 1,
+        children: [
+            {
+                text: "4 کتاب اوتام", level: 2,
+                children: [
+                    { text: "توراة (نبي موسى)", level: 3 },
+                    { text: "زبور (نبي داود)", level: 3 },
+                    { text: "إنجيل (نبي عيسى)", level: 3 },
+                    { text: "القرءان (نبي محمد ﷺ)", level: 3, children: [{text: "متواتر & ممنسوخکن کتاب لام", level: 4}] }
+                ]
+            },
+            {
+                text: "صحف (110)", level: 2,
+                children: [
+                    { text: "نبي شيث (50)", level: 3 },
+                    { text: "نبي إدريس (30)", level: 3 },
+                    { text: "نبي أدم، إبراهيم، موسى (10)", level: 3 }
+                ]
+            }
         ]
     },
-    {
-        title: "ملائکة",
-        nodes: [
-            { text: "ملائکة (10 واجب تفصيل)", level: 1, x: 50, y: 10, children: [0, 1, 2] },
-            { text: "جبريل (وحي)", level: 2, x: 20, y: 40, children: [] },
-            { text: "ميکائيل (رزقي)", level: 2, x: 50, y: 40, children: [] },
-            { text: "إسرافيل (سڠکاکالا)", level: 2, x: 80, y: 40, children: [] }
+    { // 4: Pelajaran 5
+        text: "ملائکة\n(مخلوق چهاي)", level: 1,
+        children: [
+            {
+                text: "10 ملائکة واجب تفصيل", level: 2,
+                children: [
+                    { text: "جبريل (وحي)", level: 3 },
+                    { text: "ميکائيل (رزقي)", level: 3 },
+                    { text: "إسرافيل (سڠکاکالا)", level: 3 },
+                    { text: "عزرائيل (مڠمبيل ڽاوا)", level: 3 },
+                    { text: "مالک (منجاݢ نراک)", level: 3 },
+                    { text: "رضوان (منجاݢ شرݢ)", level: 3 }
+                ]
+            },
+            {
+                text: "توݢس منچاتت & مپوال", level: 2,
+                children: [
+                    { text: "رقيب (عمل کباجيقن)", level: 3 },
+                    { text: "عتيد (عمل جاهت)", level: 3 },
+                    { text: "منکر & نکير (سوءال د قبور)", level: 3 }
+                ]
+            }
         ]
     },
-    {
-        title: "هاري قيامة",
-        nodes: [
-            { text: "هاري قيامة", level: 1, x: 50, y: 10, children: [0, 1] },
-            { text: "هورو-هارا عالم", level: 2, x: 25, y: 40, children: [2] },
-            { text: "محشر & حساب", level: 2, x: 75, y: 40, children: [3] },
-            { text: "تيوبن ڤرتام (ماتي)", level: 3, x: 25, y: 70, children: [] },
-            { text: "صراط & تيمبڠن", level: 3, x: 75, y: 70, children: [] }
+    { // 5: Pelajaran 6
+        text: "هاري قيامة\n(هورو-هارا & ڤمبالسن)", level: 1,
+        children: [
+            {
+                text: "تيوبن سڠکاکالا", level: 2,
+                children: [
+                    { text: "تيوبن 1: عالم هنچور & ماتي", level: 3 },
+                    { text: "تيوبن 2: دهيدوڤکن سمولا", level: 3 }
+                ]
+            },
+            {
+                text: "ڤريڠکت کباڠکيتن", level: 2,
+                children: [
+                    { text: "ڤادڠ محشر (دهيمڤونکن)", level: 3 },
+                    { text: "حساب & ميزان (تيمبڠن)", level: 3 },
+                    { text: "صراط (تيتين)", level: 3 },
+                    { text: "شرݢ اتاو نراک", level: 3 }
+                ]
+            }
         ]
     },
-    {
-        title: "قضاء دان قدر",
-        nodes: [
-            { text: "قضاء دان قدر", level: 1, x: 50, y: 10, children: [0, 1] },
-            { text: "قضاء (ڤلقساناءن)", level: 2, x: 25, y: 40, children: [] },
-            { text: "قدر (کتتڤن/سوکتن)", level: 2, x: 75, y: 40, children: [] }
+    { // 6: Pelajaran 7
+        text: "قضاء دان قدر\n(کتنتوان الله)", level: 1,
+        children: [
+            {
+                text: "قضاء", level: 2,
+                children: [
+                    { text: "ڤلقساناءن کتتڤن اتس کجادين\n(چونتوه: جاتوه سوسه)", level: 3 }
+                ]
+            },
+            {
+                text: "قدر", level: 2,
+                children: [
+                    { text: "اوکورن / سوکتن کتتڤن\n(چونتوه: وقتو 14 محرم)", level: 3 }
+                ]
+            },
+            {
+                text: "حکمه برايمان", level: 2,
+                children: [
+                    { text: "حسن الظن (سڠکا باءيق)", level: 3 },
+                    { text: "برشکور & برصبر", level: 3 },
+                    { text: "کتنڠن جيوا & تيدق سومبوڠ", level: 3 }
+                ]
+            }
         ]
     },
-    {
-        title: "الشفاعة",
-        nodes: [
-            { text: "الشفاعة", level: 1, x: 50, y: 10, children: [0, 1] },
-            { text: "شفاعة کبرى", level: 2, x: 25, y: 40, children: [2] },
-            { text: "شفاعة خاص", level: 2, x: 75, y: 40, children: [3] },
-            { text: "מريڠنکن عذاب حساب", level: 3, x: 25, y: 70, children: [] },
-            { text: "ماسوق شرݢ تنڤا حساب", level: 3, x: 75, y: 70, children: [] }
+    { // 7: Pelajaran 8
+        text: "الشفاعة\n(ڤرتولوڠن د اخيرة)", level: 1,
+        children: [
+            {
+                text: "شفاعة کبرى (فصل القضاء)", level: 2,
+                children: [
+                    { text: "مموهون مريڠنکن عذاب اونتوق ممولاکن حساب", level: 3 },
+                    { text: "هاڽ درڤد نبي محمد ﷺ", level: 3 }
+                ]
+            },
+            {
+                text: "شفاعة خاص نبي محمد ﷺ", level: 2,
+                children: [
+                    { text: "مماسوقکن ک شرݢ تنڤا حساب", level: 3 },
+                    { text: "مريڠنکن عذاب", level: 3 },
+                    { text: "منمبه مرتبت اهلي شرݢ", level: 3 }
+                ]
+            },
+            {
+                text: "شفاعة عموم", level: 2,
+                children: [
+                    { text: "مڠلوارکن اهلي توحيد دري نراک", level: 3 },
+                    { text: "درڤد انبياء، ملائکة & مؤمن صالح", level: 3 }
+                ]
+            }
         ]
     }
 ];
@@ -913,58 +1018,151 @@ function loadTfQuestion(index) {
 }
 function selectTfAnswer(answer) { userTfAnswers[currentTfIndex] = answer; if (answer === trueFalseData[currentTfIndex].a) correctTfCount++; document.getElementById('tf-scoreTracker').innerText = `مرکه: ${correctTfCount} / ${trueFalseData.length}`; document.getElementById('tf-progressTracker').innerText = `دجواب: ${userTfAnswers.filter(a => a !== null).length}`; renderTfSidebar(); loadTfQuestion(currentTfIndex); }
 
+// MIND MAP LOGIC
+let mmScale = 1;
+let mmPanX = 0;
+let mmPanY = 0;
+let isPanning = false;
+let startX, startY;
+
 function renderMindMap(topicIndex) {
-    const data = mindMapData[topicIndex]; const wrapper = document.getElementById('mm-nodes-wrapper'); const svg = document.getElementById('mm-svg'); wrapper.innerHTML = ''; svg.innerHTML = '';
+    const data = mindMapData[topicIndex]; 
+    const wrapper = document.getElementById('mm-nodes-wrapper'); 
+    const svg = document.getElementById('mm-svg'); 
+    wrapper.innerHTML = ''; 
+    svg.innerHTML = '';
+    
+    // Reset view
+    resetMindMap();
+    
     if (!data) return;
     
-    // Simple tree layout algorithm
-    const nodes = JSON.parse(JSON.stringify(data.nodes)); // deep copy
-    
-    // Group by levels
-    let levels = [[], [], [], []];
-    nodes.forEach((n, i) => { n.id = `node-${i}`; levels[n.level-1].push(n); });
-    
-    // Render Nodes horizontally centered
-    levels.forEach((lvlNodes, lIdx) => {
-        if(lvlNodes.length === 0) return;
-        const rowDiv = document.createElement('div'); rowDiv.className = 'flex justify-center items-start gap-8 w-full';
-        lvlNodes.forEach(n => {
-            const el = document.createElement('div'); el.id = n.id; el.className = `node-level-${n.level} max-w-sm`; el.innerText = n.text;
-            rowDiv.appendChild(el);
-        });
-        wrapper.appendChild(rowDiv);
-    });
+    // Build tree recursively
+    const treeDOM = buildMindMapNode(data, "root");
+    wrapper.appendChild(treeDOM);
 
-    // Draw SVG Lines after a tiny delay to ensure DOM is calculated
-    setTimeout(() => { drawMindMapLines(nodes); }, 100);
+    // Draw SVG Lines after DOM is painted
+    setTimeout(() => { drawMindMapLines(); }, 50);
 }
 
-function drawMindMapLines(nodes) {
-    const svg = document.getElementById('mm-svg'); svg.innerHTML = '';
-    const wrapperRect = document.getElementById('mm-nodes-wrapper').getBoundingClientRect();
+function buildMindMapNode(nodeData, idPrefix) {
+    // Container for this node and its children
+    const container = document.createElement('div');
+    container.className = 'flex flex-col items-center gap-8 relative';
     
-    nodes.forEach(n => {
-        if (!n.children || n.children.length === 0) return;
-        const pEl = document.getElementById(n.id); if(!pEl) return;
-        const pRect = pEl.getBoundingClientRect();
-        const pX = pRect.left + (pRect.width / 2) - wrapperRect.left;
-        const pY = pRect.bottom - wrapperRect.top;
+    // The Node Card
+    const nodeEl = document.createElement('div');
+    nodeEl.className = `node-level-${nodeData.level} relative z-10`;
+    nodeEl.innerText = nodeData.text;
+    nodeEl.id = `node-${idPrefix}`;
+    container.appendChild(nodeEl);
 
-        n.children.forEach(cIdx => {
-            const cEl = document.getElementById(`node-${cIdx}`); if(!cEl) return;
-            const cRect = cEl.getBoundingClientRect();
-            const cX = cRect.left + (cRect.width / 2) - wrapperRect.left;
-            const cY = cRect.top - wrapperRect.top;
-            
-            const line = document.createElementNS('http://www.w3.org/2000/svg','path');
-            // Curve path
-            const d = `M ${pX} ${pY} C ${pX} ${pY + 30}, ${cX} ${cY - 30}, ${cX} ${cY}`;
-            line.setAttribute('d', d); line.setAttribute('stroke', '#6ee7b7'); line.setAttribute('stroke-width', '3'); line.setAttribute('fill', 'none');
-            svg.appendChild(line);
+    // Render Children if any
+    if (nodeData.children && nodeData.children.length > 0) {
+        const childrenWrapper = document.createElement('div');
+        childrenWrapper.className = 'flex flex-row justify-center items-start gap-6 md:gap-12 pt-6 relative w-max';
+        childrenWrapper.dataset.parentId = nodeEl.id; // Mark for line drawing
+        
+        nodeData.children.forEach((child, index) => {
+            const childTree = buildMindMapNode(child, `${idPrefix}-${index}`);
+            childTree.dataset.childOf = nodeEl.id; // Mark for line drawing
+            childrenWrapper.appendChild(childTree);
         });
+        
+        container.appendChild(childrenWrapper);
+    }
+    
+    return container;
+}
+
+function drawMindMapLines() {
+    const svg = document.getElementById('mm-svg');
+    svg.innerHTML = '';
+    const wrapperRect = document.getElementById('mm-transform-layer').getBoundingClientRect();
+    
+    // Find all elements marked as children
+    const childContainers = document.querySelectorAll('[data-child-of]');
+    
+    childContainers.forEach(container => {
+        const parentId = container.dataset.childOf;
+        const parentEl = document.getElementById(parentId);
+        const childEl = container.querySelector('[id^="node-"]'); // The actual card inside container
+        
+        if (!parentEl || !childEl) return;
+        
+        // Calculate relative coordinates inside the transform layer
+        const pRect = parentEl.getBoundingClientRect();
+        const cRect = childEl.getBoundingClientRect();
+        
+        // Compensate for scale to get absolute positions correct
+        const pX = (pRect.left + (pRect.width / 2) - wrapperRect.left) / mmScale;
+        const pY = (pRect.bottom - wrapperRect.top) / mmScale;
+        
+        const cX = (cRect.left + (cRect.width / 2) - wrapperRect.left) / mmScale;
+        const cY = (cRect.top - wrapperRect.top) / mmScale;
+        
+        // Draw elegant curve
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        const curveOffset = Math.abs(cY - pY) / 2;
+        const d = `M ${pX} ${pY} C ${pX} ${pY + curveOffset}, ${cX} ${cY - curveOffset}, ${cX} ${cY}`;
+        
+        path.setAttribute('d', d); 
+        path.setAttribute('stroke', '#6ee7b7'); 
+        path.setAttribute('stroke-width', '4'); 
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(path);
     });
 }
-window.addEventListener('resize', () => { if(!document.getElementById('mindmap-app').classList.contains('hidden')) renderMindMap(document.getElementById('mm-topic-select').value); });
+
+// Pan & Zoom Controls
+function zoomMindMap(delta) {
+    mmScale += delta;
+    if (mmScale < 0.3) mmScale = 0.3;
+    if (mmScale > 2) mmScale = 2;
+    applyMindMapTransform();
+}
+
+function resetMindMap() {
+    mmScale = 1; mmPanX = 0; mmPanY = 0;
+    applyMindMapTransform();
+}
+
+function applyMindMapTransform() {
+    const layer = document.getElementById('mm-transform-layer');
+    layer.style.transform = `translate(${mmPanX}px, ${mmPanY}px) scale(${mmScale})`;
+    // Redraw lines just in case scale messes bounding boxes (usually not needed if done relative)
+}
+
+// Pan Logic setup
+const viewport = document.getElementById('mm-viewport');
+viewport.addEventListener('mousedown', (e) => {
+    isPanning = true;
+    startX = e.clientX - mmPanX;
+    startY = e.clientY - mmPanY;
+});
+window.addEventListener('mousemove', (e) => {
+    if (!isPanning) return;
+    mmPanX = e.clientX - startX;
+    mmPanY = e.clientY - startY;
+    applyMindMapTransform();
+});
+window.addEventListener('mouseup', () => { isPanning = false; });
+// Touch support for Pan
+viewport.addEventListener('touchstart', (e) => {
+    isPanning = true;
+    startX = e.touches[0].clientX - mmPanX;
+    startY = e.touches[0].clientY - mmPanY;
+});
+window.addEventListener('touchmove', (e) => {
+    if (!isPanning) return;
+    mmPanX = e.touches[0].clientX - startX;
+    mmPanY = e.touches[0].clientY - startY;
+    applyMindMapTransform();
+    e.preventDefault(); // prevent scroll
+}, {passive: false});
+window.addEventListener('touchend', () => { isPanning = false; });
+
 
 function initMatch() { matchInitialized = true; currentMatchLevel = 0; loadMatchLevel(); }
 function loadMatchLevel() {
