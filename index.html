@@ -975,40 +975,253 @@ function loadTfQuestion(index) {
 }
 function selectTfAnswer(answer) { userTfAnswers[currentTfIndex] = answer; if (answer === trueFalseData[currentTfIndex].a) correctTfCount++; document.getElementById('tf-scoreTracker').innerText = `مرکه: ${correctTfCount} / ${trueFalseData.length}`; document.getElementById('tf-progressTracker').innerText = `دجواب: ${userTfAnswers.filter(a => a !== null).length}`; renderTfSidebar(); loadTfQuestion(currentTfIndex); }
 
-// LOGIK PETA MINDA
-let mmScale = 1; let mmPanX = 0; let mmPanY = 0; let isPanning = false; let startX, startY;
+// MIND MAP LOGIC
+let mmScale = 1;
+let mmPanX = 0;
+let mmPanY = 0;
+let isPanning = false;
+let startX, startY;
+// Pinch zoom state
+let initialPinchDistance = null;
+let initialScale = 1;
+
 function renderMindMap(topicIndex) {
-    const data = mindMapData[topicIndex]; const wrapper = document.getElementById('mm-nodes-wrapper'); const svg = document.getElementById('mm-svg'); wrapper.innerHTML = ''; svg.innerHTML = ''; resetMindMap(); if (!data) return;
-    const treeDOM = buildMindMapNode(data, "root"); wrapper.appendChild(treeDOM); setTimeout(() => { drawMindMapLines(); }, 50);
+    const data = mindMapData[topicIndex]; 
+    const wrapper = document.getElementById('mm-nodes-wrapper'); 
+    const svg = document.getElementById('mm-svg'); 
+    wrapper.innerHTML = ''; 
+    svg.innerHTML = '';
+    
+    // Reset view
+    resetMindMap();
+    
+    if (!data) return;
+    
+    // Build tree recursively
+    const treeDOM = buildMindMapNode(data, "root");
+    wrapper.appendChild(treeDOM);
+
+    // Draw SVG Lines after DOM is painted
+    setTimeout(() => { drawMindMapLines(); }, 50);
 }
+
 function buildMindMapNode(nodeData, idPrefix) {
-    const container = document.createElement('div'); container.className = 'flex flex-col items-center gap-8 relative';
-    const nodeEl = document.createElement('div'); nodeEl.className = `node-level-${nodeData.level} relative z-10`; nodeEl.innerText = nodeData.text; nodeEl.id = `node-${idPrefix}`; container.appendChild(nodeEl);
+    // Container for this node and its children
+    const container = document.createElement('div');
+    container.className = 'flex flex-col items-center gap-8 relative';
+    
+    // The Node Card
+    const nodeEl = document.createElement('div');
+    nodeEl.className = `node-level-${nodeData.level} relative z-10`;
+    nodeEl.innerText = nodeData.text;
+    nodeEl.id = `node-${idPrefix}`;
+    container.appendChild(nodeEl);
+
+    // Render Children if any
     if (nodeData.children && nodeData.children.length > 0) {
-        const childrenWrapper = document.createElement('div'); childrenWrapper.className = 'flex flex-row justify-center items-start gap-6 md:gap-12 pt-6 relative w-max'; childrenWrapper.dataset.parentId = nodeEl.id;
-        nodeData.children.forEach((child, index) => { const childTree = buildMindMapNode(child, `${idPrefix}-${index}`); childTree.dataset.childOf = nodeEl.id; childrenWrapper.appendChild(childTree); }); container.appendChild(childrenWrapper);
+        const childrenWrapper = document.createElement('div');
+        childrenWrapper.className = 'flex flex-row justify-center items-start gap-6 md:gap-12 pt-6 relative w-max';
+        childrenWrapper.dataset.parentId = nodeEl.id; // Mark for line drawing
+        
+        nodeData.children.forEach((child, index) => {
+            const childTree = buildMindMapNode(child, `${idPrefix}-${index}`);
+            childTree.dataset.childOf = nodeEl.id; // Mark for line drawing
+            childrenWrapper.appendChild(childTree);
+        });
+        
+        container.appendChild(childrenWrapper);
     }
+    
     return container;
 }
+
 function drawMindMapLines() {
-    const svg = document.getElementById('mm-svg'); svg.innerHTML = ''; const wrapperRect = document.getElementById('mm-transform-layer').getBoundingClientRect(); const childContainers = document.querySelectorAll('[data-child-of]');
+    const svg = document.getElementById('mm-svg');
+    svg.innerHTML = '';
+    const wrapperRect = document.getElementById('mm-transform-layer').getBoundingClientRect();
+    
+    // Find all elements marked as children
+    const childContainers = document.querySelectorAll('[data-child-of]');
+    
     childContainers.forEach(container => {
-        const parentId = container.dataset.childOf; const parentEl = document.getElementById(parentId); const childEl = container.querySelector('[id^="node-"]'); if (!parentEl || !childEl) return;
-        const pRect = parentEl.getBoundingClientRect(); const cRect = childEl.getBoundingClientRect();
-        const pX = (pRect.left + (pRect.width / 2) - wrapperRect.left) / mmScale; const pY = (pRect.bottom - wrapperRect.top) / mmScale; const cX = (cRect.left + (cRect.width / 2) - wrapperRect.left) / mmScale; const cY = (cRect.top - wrapperRect.top) / mmScale;
-        const path = document.createElementNS('http://www.w3.org/2000/svg','path'); const curveOffset = Math.abs(cY - pY) / 2; const d = `M ${pX} ${pY} C ${pX} ${pY + curveOffset}, ${cX} ${cY - curveOffset}, ${cX} ${cY}`;
-        path.setAttribute('d', d); path.setAttribute('stroke', '#6ee7b7'); path.setAttribute('stroke-width', '4'); path.setAttribute('fill', 'none'); path.setAttribute('stroke-linecap', 'round'); svg.appendChild(path);
+        const parentId = container.dataset.childOf;
+        const parentEl = document.getElementById(parentId);
+        const childEl = container.querySelector('[id^="node-"]'); // The actual card inside container
+        
+        if (!parentEl || !childEl) return;
+        
+        // Calculate relative coordinates inside the transform layer
+        const pRect = parentEl.getBoundingClientRect();
+        const cRect = childEl.getBoundingClientRect();
+        
+        // Compensate for scale to get absolute positions correct
+        const pX = (pRect.left + (pRect.width / 2) - wrapperRect.left) / mmScale;
+        const pY = (pRect.bottom - wrapperRect.top) / mmScale;
+        
+        const cX = (cRect.left + (cRect.width / 2) - wrapperRect.left) / mmScale;
+        const cY = (cRect.top - wrapperRect.top) / mmScale;
+        
+        // Draw elegant curve
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        const curveOffset = Math.abs(cY - pY) / 2;
+        const d = `M ${pX} ${pY} C ${pX} ${pY + curveOffset}, ${cX} ${cY - curveOffset}, ${cX} ${cY}`;
+        
+        path.setAttribute('d', d); 
+        path.setAttribute('stroke', '#6ee7b7'); 
+        path.setAttribute('stroke-width', '4'); 
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(path);
     });
 }
-function zoomMindMap(delta) { mmScale += delta; if (mmScale < 0.3) mmScale = 0.3; if (mmScale > 2) mmScale = 2; applyMindMapTransform(); }
-function resetMindMap() { mmScale = 1; mmPanX = 0; mmPanY = 0; applyMindMapTransform(); }
-function applyMindMapTransform() { document.getElementById('mm-transform-layer').style.transform = `translate(${mmPanX}px, ${mmPanY}px) scale(${mmScale})`; }
 
+// Pan & Zoom Controls
+function zoomMindMap(delta, zoomPointX = null, zoomPointY = null) {
+    const oldScale = mmScale;
+    mmScale += delta;
+    if (mmScale < 0.2) mmScale = 0.2; // Min zoom out limits
+    if (mmScale > 3) mmScale = 3;   // Max zoom in limits
+    
+    // Logic to zoom towards the mouse pointer rather than strictly center
+    if (zoomPointX !== null && zoomPointY !== null) {
+        const scaleRatio = mmScale / oldScale;
+        mmPanX = zoomPointX - (zoomPointX - mmPanX) * scaleRatio;
+        mmPanY = zoomPointY - (zoomPointY - mmPanY) * scaleRatio;
+    }
+    
+    applyMindMapTransform();
+}
+
+function resetMindMap() {
+    mmScale = 1; mmPanX = 0; mmPanY = 0;
+    applyMindMapTransform();
+}
+
+function applyMindMapTransform() {
+    const layer = document.getElementById('mm-transform-layer');
+    layer.style.transform = `translate(${mmPanX}px, ${mmPanY}px) scale(${mmScale})`;
+}
+
+// Helper to get distance between two touch points for pinch-to-zoom
+function getPinchDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Helper to get center point between two touches
+function getPinchCenter(touches) {
+    return {
+        x: (touches[0].clientX + touches[1].clientX) / 2,
+        y: (touches[0].clientY + touches[1].clientY) / 2
+    };
+}
+
+// Pan & Zoom Logic setup
 const viewport = document.getElementById('mm-viewport');
-viewport.addEventListener('mousedown', (e) => { isPanning = true; startX = e.clientX - mmPanX; startY = e.clientY - mmPanY; }); window.addEventListener('mousemove', (e) => { if (!isPanning) return; mmPanX = e.clientX - startX; mmPanY = e.clientY - startY; applyMindMapTransform(); }); window.addEventListener('mouseup', () => { isPanning = false; });
-viewport.addEventListener('touchstart', (e) => { isPanning = true; startX = e.touches[0].clientX - mmPanX; startY = e.touches[0].clientY - mmPanY; }); window.addEventListener('touchmove', (e) => { if (!isPanning) return; mmPanX = e.touches[0].clientX - startX; mmPanY = e.touches[0].clientY - startY; applyMindMapTransform(); e.preventDefault(); }, {passive: false}); window.addEventListener('touchend', () => { isPanning = false; });
 
-// LOGIK PADANAN (MATCHING)
+// 1. MOUSE DRAG (PAN)
+viewport.addEventListener('mousedown', (e) => {
+    isPanning = true;
+    startX = e.clientX - mmPanX;
+    startY = e.clientY - mmPanY;
+    viewport.style.cursor = 'grabbing';
+});
+window.addEventListener('mousemove', (e) => {
+    if (!isPanning) return;
+    mmPanX = e.clientX - startX;
+    mmPanY = e.clientY - startY;
+    applyMindMapTransform();
+});
+window.addEventListener('mouseup', () => { 
+    isPanning = false; 
+    viewport.style.cursor = 'grab';
+});
+
+// 2. MOUSE WHEEL SCROLL (ZOOM)
+viewport.addEventListener('wheel', (e) => {
+    e.preventDefault(); // Prevent page scrolling
+    const delta = e.deltaY > 0 ? -0.1 : 0.1; // Zoom out if scrolling down, zoom in if up
+    
+    // Determine mouse position relative to the viewport to zoom into that point
+    const rect = viewport.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    zoomMindMap(delta, x, y);
+}, { passive: false });
+
+// 3. TOUCH EVENTS (PAN & PINCH-TO-ZOOM)
+viewport.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+        // Single touch = Pan
+        isPanning = true;
+        startX = e.touches[0].clientX - mmPanX;
+        startY = e.touches[0].clientY - mmPanY;
+    } else if (e.touches.length === 2) {
+        // Double touch = Pinch Zoom
+        isPanning = false;
+        initialPinchDistance = getPinchDistance(e.touches);
+        initialScale = mmScale;
+    }
+}, {passive: false});
+
+viewport.addEventListener('touchmove', (e) => {
+    e.preventDefault(); // crucial to prevent page scrolling/zooming while interacting with map
+    
+    if (e.touches.length === 1 && isPanning) {
+        // Panning
+        mmPanX = e.touches[0].clientX - startX;
+        mmPanY = e.touches[0].clientY - startY;
+        applyMindMapTransform();
+    } else if (e.touches.length === 2 && initialPinchDistance !== null) {
+        // Pinching to Zoom
+        const currentDistance = getPinchDistance(e.touches);
+        const distanceDelta = currentDistance - initialPinchDistance;
+        
+        // Calculate dynamic zoom increment based on finger spread distance
+        // 0.005 is a sensitivity factor you can adjust
+        const zoomIncrement = distanceDelta * 0.005; 
+        
+        const center = getPinchCenter(e.touches);
+        const rect = viewport.getBoundingClientRect();
+        const x = center.x - rect.left;
+        const y = center.y - rect.top;
+
+        // Apply scale directly rather than incrementally to keep it smooth
+        const newScale = initialScale + zoomIncrement;
+        const oldScale = mmScale;
+        
+        // clamp limits directly
+        mmScale = newScale;
+        if (mmScale < 0.2) mmScale = 0.2; 
+        if (mmScale > 3) mmScale = 3;   
+        
+        // Adjust pan to zoom into pinch center
+        if (mmScale !== oldScale) {
+             const scaleRatio = mmScale / oldScale;
+             mmPanX = x - (x - mmPanX) * scaleRatio;
+             mmPanY = y - (y - mmPanY) * scaleRatio;
+             applyMindMapTransform();
+        }
+    }
+}, {passive: false});
+
+viewport.addEventListener('touchend', (e) => { 
+    if (e.touches.length < 2) {
+        initialPinchDistance = null;
+    }
+    if (e.touches.length === 0) {
+        isPanning = false; 
+    } else if (e.touches.length === 1) {
+        // If one finger is lifted during a pinch, reset pan anchor for the remaining finger
+        startX = e.touches[0].clientX - mmPanX;
+        startY = e.touches[0].clientY - mmPanY;
+        isPanning = true;
+    }
+});
+
+
 function initMatch() { matchInitialized = true; currentMatchLevel = 0; loadMatchLevel(); }
 function loadMatchLevel() {
     if (currentMatchLevel >= matchData.length) { showModal("تهنيئه!", "اندا تله ملڠکڤکن کسموا 10 سيشن ڤادنن!", "fa-trophy", "text-amber-500"); switchView('home'); return; }
